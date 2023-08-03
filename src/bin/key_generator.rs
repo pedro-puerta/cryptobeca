@@ -1,6 +1,16 @@
 use rand::Rng;
 use secp256k1::{PublicKey, Secp256k1, SecretKey};
 
+/// Generates a random secp256k1 key pair.
+///
+/// # Functionality
+///
+/// - Initializes thread RNG  
+/// - Generates 32 random bytes for private key
+/// - Converts private key bytes to SecretKey
+/// - Derives public key from private key
+/// - Encodes private and public keys as hex strings
+/// - Prints private key and public key
 fn main() {
     let mut rng = rand::thread_rng();
     let mut private_key_bytes: [u8; 32] = [0; 32];

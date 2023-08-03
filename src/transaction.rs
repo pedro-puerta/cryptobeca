@@ -3,6 +3,17 @@ use std::str::FromStr;
 use secp256k1::{ecdsa::Signature, Message, PublicKey, Secp256k1, SecretKey};
 use sha3::{Digest, Sha3_256};
 
+/// Transaction struct.
+///
+/// Represents a transaction in the blockchain.
+///
+/// # Fields
+///
+/// * `from_address` - The sender address. Optional, for mining rewards.
+/// * `to_address` - The recipient address. 
+/// * `amount` - The amount transferred.
+/// * `signature` - The cryptographic signature of the transaction.
+/// * `hash` - The hash of the transaction.
 #[derive(Debug, Clone)]
 pub struct Transaction {
     pub from_address: Option<String>,
@@ -11,12 +22,38 @@ pub struct Transaction {
     pub signature: Option<String>,
     pub hash: Option<String>,
 }
+
+/// TransactionError enum.
+/// 
+/// Represents the possible errors when validating a transaction.
+///
+/// # Variants
+///
+/// * `InvalidTransaction` - Returned when the transaction is invalid.
 #[derive(Debug)]
 pub enum TransactionError {
     InvalidTransaction,
 }
 
 impl Transaction {
+    /// Calculates the hash for the transaction.
+    ///
+    /// # Parameters
+    ///
+    /// * `from_address` - The sender address 
+    /// * `to_address` - The recipient address
+    /// * `amount` - The amount transferred
+    ///
+    /// # Returns
+    /// 
+    /// The SHA3-256 hash of the transaction details as a hex encoded string.
+    ///
+    /// # Functionality
+    ///
+    /// - Formats the transaction details into an input string
+    /// - Feeds the input string into a SHA3-256 hasher
+    /// - Finalizes the hash 
+    /// - Encodes the hash bytes as hex
     fn calculate_hash(
         &self,
         from_address: Option<String>,
@@ -30,6 +67,27 @@ impl Transaction {
         hex::encode(result)
     }
 
+    /// Signs the transaction using the provided private key.
+    ///
+    /// # Parameters
+    ///
+    /// * `signing_key` - The private key to sign the transaction with 
+    ///
+    /// # Returns
+    ///
+    /// `Result<(), String>`
+    ///
+    /// - `Ok(())` if signing succeeded 
+    /// - `Err(String)` containing the error message if signing failed
+    ///
+    /// # Functionality
+    ///
+    /// - Validates the provided public and private keys match
+    /// - Calculates the transaction hash 
+    /// - Creates a secp256k1 message from the hash 
+    /// - Signs the message using the private key  
+    /// - Serializes the signature to DER format
+    /// - Sets the transaction signature
     pub fn sign(&mut self, signing_key: &str) -> Result<(), String> {
         if let Some(ref from_address) = self.from_address {
             let secp = Secp256k1::new();
@@ -79,6 +137,26 @@ impl Transaction {
         }
     }
 
+    /// Validates the transaction's signature.
+    ///
+    /// # Returns
+    ///
+    /// `Result<bool, String>`
+    ///
+    /// - `Ok(true)` if signature is valid
+    /// - `Ok(false)` if no signature present 
+    /// - `Err(String)` containing error message if validation failed
+    ///
+    /// # Functionality
+    ///
+    /// - Returns Ok(true) if no from_address  
+    /// - Checks signature is present
+    /// - Decodes signature from hex
+    /// - Decodes public key from address
+    /// - Decodes hash from transaction hash
+    /// - Constructs secp256k1 message from hash
+    /// - Verifies signature against public key & message 
+    /// - Returns result of signature verification
     pub fn is_valid(&self) -> Result<bool, String> {
         if self.from_address.is_none() {
             return Ok(true);
